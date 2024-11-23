@@ -1,4 +1,23 @@
-# Dataset Distillers Are Good Label Denoisers In the Wild
+<p align="center">
+
+  <h2 align="center"><strong>Dataset Distillers Are Good Label Denoisers In the Wild</strong></h2>
+
+  <p align="center">
+  <span>
+    <a href="https://scholar.google.com/citations?user=PKFAv-cAAAAJ&hl=en">Lechao Cheng</a>,
+    Kaifeng Chen,
+    Jiyang Li,
+    Shengeng Tang,
+    Shufei Zhang,
+    Meng Wang
+  </span>
+</p>
+
+
+<div align="center">
+<a href='https://arxiv.org/abs/2411.11924'><img src='https://img.shields.io/badge/arXiv-2411.11924-b31b1b.svg'></a>
+</div>
+</div>
 
 ## Getting Started
 
@@ -13,7 +32,7 @@ conda activate ddlnl
 
 ### Dataset
 
-For Tiny-ImageNet, it is best to download it yourself and then process it through `dataSolu/deal_Tiny.py`.
+For Tiny-ImageNet, it is best to download it in [tiny-imagenet-200](http://cs231n.stanford.edu/tiny-imagenet-200.zip) and then process it through `dataSolu/deal_Tiny.py`.
 
 ## Train
 
