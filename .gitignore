@@ -1,0 +1,18 @@
+__pycache__/
+**/__pycache__/
+dataset
+
+# DATM
+DATM+ours/buffer_storage*
+DATM+ours/distill/logged_files
+DATM+ours/distill/wandb
+
+# DANCE
+DANCE+ours/pretrained_buffers
+DANCE+ours/wandb
+DANCE+ours/results
+
+# RCIG
+RCIG+ours/output_dir
+RCIG+ours/data
+
