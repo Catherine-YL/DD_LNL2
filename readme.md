@@ -42,5 +42,16 @@ See `ddlnl_scripts.md` to reproduce the results
 
 Our code is built upon [DATM](https://github.com/NUS-HPC-AI-Lab/DATM), [DANCE](https://github.com/Hansong-Zhang/DANCE) and [RCIG](https://github.com/yolky/RCIG).
 
+## Citation
 
+If you find our code useful for your research, please cite our paper.
+
+```
+@article{cheng2024dataset,
+  title={Dataset Distillers Are Good Label Denoisers In the Wild},
+  author={Cheng, Lechao and Chen, Kaifeng and Li, Jiyang and Tang, Shengeng and Zhang, Shufei and Wang, Meng},
+  journal={arXiv preprint arXiv:2411.11924},
+  year={2024}
+}
+```
 
