@@ -24,7 +24,7 @@
     "implicit_batch_size": 2000,
     "hinv_batch_size": 2000,
     "inner_train_batch_size": 2000,
-    "outer_train_batch_size": 2000,
+    "pool_train_batch_size": 2000,
     "max_forward_batch_size": 2000,
     "do_precompute": true,
     "use_flip": false,

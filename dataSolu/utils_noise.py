@@ -228,26 +228,67 @@ def build_for_cifar100(size, noise):
     return P
 
 def noisify_multiclass_asymmetric_cifar100(y_train, noise, random_state=None, nb_classes=100):
-    """mistakes:
-        flip in the symmetric way
-    """
-    nb_classes = 100
-    P = np.eye(nb_classes)
-    n = noise
-    nb_superclasses = 20
-    nb_subclasses = 5
+    assert 0.0 <= noise <= 1.0
+    classes = ['apple', 'aquarium_fish', 'baby', 'bear', 'beaver',
+               'bed', 'bee', 'beetle', 'bicycle', 'bottle',
+               'bowl', 'boy', 'bridge', 'bus', 'butterfly',
+               'camel', 'can', 'castle', 'caterpillar', 'cattle',
+               'chair', 'chimpanzee', 'clock', 'cloud', 'cockroach',
+               'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+               'dolphin', 'elephant', 'flatfish', 'forest', 'fox',
+               'girl', 'hamster', 'house', 'kangaroo', 'keyboard',
+               'lamp', 'lawn_mower', 'leopard', 'lion', 'lizard',
+               'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain',
+               'mouse', 'mushroom', 'oak_tree', 'orange', 'orchid',
+               'otter', 'palm_tree', 'pear', 'pickup_truck', 'pine_tree',
+               'plain', 'plate', 'poppy', 'porcupine', 'possum',
+               'rabbit', 'raccoon', 'ray', 'road', 'rocket',
+               'rose', 'sea', 'seal', 'shark', 'shrew',
+               'skunk', 'skyscraper', 'snail', 'snake', 'spider',
+               'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
+               'tank', 'telephone', 'television', 'tiger', 'tractor',
+               'train', 'trout', 'tulip', 'turtle', 'wardrobe',
+               'whale', 'willow_tree', 'wolf', 'woman', 'worm']
+    cifar100_subclasses = [
+        ['beaver', 'dolphin', 'otter', 'seal', 'whale'],  # aquatic_mammals
+        ['aquarium_fish', 'flatfish', 'ray', 'shark', 'trout'],  # fish
+        ['orchid', 'poppy', 'rose', 'sunflower', 'tulip'],  # flowers
+        ['bottle', 'bowl', 'can', 'cup', 'plate'],  # food_containers
+        ['apple', 'mushroom', 'orange', 'pear', 'sweet_pepper'],  # fruit_and_vegetables
+        ['clock', 'keyboard', 'lamp', 'telephone', 'television'],  # household_electrical_devices
+        ['bed', 'chair', 'couch', 'table', 'wardrobe'],  # household_furniture
+        ['bee', 'beetle', 'butterfly', 'caterpillar', 'cockroach'],  # insects
+        ['bear', 'leopard', 'lion', 'tiger', 'wolf'],  # large_carnivores
+        ['bridge', 'castle', 'house', 'road', 'skyscraper'],  # large_man-made_outdoor_things
+        ['cloud', 'forest', 'mountain', 'plain', 'sea'],  # large_natural_outdoor_scenes
+        ['camel', 'cattle', 'chimpanzee', 'elephant', 'kangaroo'],  # large_omnivores_and_herbivores
+        ['fox', 'porcupine', 'possum', 'raccoon', 'skunk'],  # medium_mammals
+        ['crab', 'lobster', 'snail', 'spider', 'worm'],  # non-insect_invertebrates
+        ['baby', 'boy', 'girl', 'man', 'woman'],  # people
+        ['crocodile', 'dinosaur', 'lizard', 'snake', 'turtle'],  # reptiles
+        ['hamster', 'rabbit', 'shrew', 'squirrel'],  # small_mammals
+        ['maple_tree', 'oak_tree', 'palm_tree', 'pine_tree', 'willow_tree'],  # trees
+        ['bicycle', 'bus', 'motorcycle', 'pickup_truck', 'train'],  # vehicles_1
+        ['lawn_mower', 'rocket', 'streetcar', 'tank', 'tractor']  # vehicles_2
+    ]
 
-    if n > 0.0:
-        for i in np.arange(nb_superclasses):
-            init, end = i * nb_subclasses, (i + 1) * nb_subclasses
-            P[init:end, init:end] = build_for_cifar100(nb_subclasses, n)
+    P = np.eye(100)  
+    for superclass_subclasses in cifar100_subclasses:
+        indices = [classes.index(cls) for cls in superclass_subclasses]
+        subclass_matrix = build_for_cifar100(len(indices), noise)
 
-            y_train_noisy = multiclass_noisify(np.array(y_train), P=P, random_state=random_state)
-            actual_noise = (y_train_noisy != np.array(y_train)).mean()
-        assert actual_noise > 0.0
-        print('Actual noise %.2f' % actual_noise)
-        targets = y_train_noisy
-    return targets, actual_noise
+        for i, idx_i in enumerate(indices):
+            for j, idx_j in enumerate(indices):
+                P[idx_i, idx_j] = subclass_matrix[i, j]
+
+    y_train = np.array(y_train)
+    y_train_noisy = multiclass_noisify(y_train, P=P, random_state=random_state)
+    actual_noise = (y_train_noisy != y_train).mean()
+    assert actual_noise > 0.0
+    print(f'Actual noise: {actual_noise:.2f}')
+    print("Noise matrix P:")
+    print(P)
+    return y_train_noisy, actual_noise
 
 def noisify(dataset='mnist', nb_classes=10, train_labels=None, noise_type=None, noise_rate=0, random_state=0):
     if noise_type == 'pairflip':
