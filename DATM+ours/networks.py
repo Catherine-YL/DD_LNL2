@@ -32,13 +32,16 @@ class ConvNet(nn.Module):
 
         self.features, shape_feat = self._make_layers(channel, net_width, net_depth, net_norm, net_act, net_pooling, im_size)
         num_feat = shape_feat[0]*shape_feat[1]*shape_feat[2]
+        self.num_feat = num_feat
+        self.num_classes = num_classes
         self.classifier = nn.Linear(num_feat, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, finaly_layer=True):
         # print("MODEL DATA ON: ", x.get_device(), "MODEL PARAMS ON: ", self.classifier.weight.data.get_device())
         out = self.features(x)
         out = out.view(out.size(0), -1)
-        out = self.classifier(out)
+        if finaly_layer:
+            out = self.classifier(out)
         return out
 
     def _get_activation(self, net_act):

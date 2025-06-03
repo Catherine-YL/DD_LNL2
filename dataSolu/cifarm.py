@@ -155,6 +155,7 @@ class CIFAR10m(data.Dataset):
         if self.train:
             if self.noise_type !='clean':
                 img, target = self.train_data[index], self.train_noisy_labels[index]
+                target_clean = self.train_labels[index]
             else:
                 img, target = self.train_data[index], self.train_labels[index]
         else:
@@ -169,6 +170,10 @@ class CIFAR10m(data.Dataset):
 
         if self.target_transform is not None:
             target = self.target_transform(target)
+        
+        if self.train:
+            if self.noise_type !='clean':
+                return img, target, target_clean
 
         return img, target
 

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import os
 import kornia as K
 import tqdm
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 from torchvision import datasets, transforms
 from scipy.ndimage.interpolation import rotate as scipyrotate
 from networks import MLP, ConvNet, LeNet, AlexNet, VGG11BN, VGG11, ResNet18, ResNet18BN_AP, ResNet18_AP, ResNet18BN
@@ -92,6 +92,56 @@ class NoisyImageFolder(Dataset):
         label = self.labels[idx]
 
         return img, label
+
+def create_validation_set(train_dataset, val_ratio=0.01, random_state=0):    
+    """
+    从训练集中每类抽取 val_ratio 比例的干净样本作为验证集，尽可能均衡。
+    
+    :param train_dataset: 数据集对象
+    :param val_ratio: 验证集比例 (默认 1%)
+    :param random_state: 随机种子
+    :return: (train_subset, val_subset)
+    """
+    np.random.seed(random_state)
+
+    # 获取训练集的标签和噪声标记
+    train_labels = np.squeeze(np.array(train_dataset.train_labels))
+    # if dataset=='CIFAR10' or 'CIFAR100':
+    #     noise_or_not = np.array(train_dataset.noise_or_not[0])  # True 表示是噪声样本
+    # elif dataset=='Tiny':
+    noise_or_not = np.squeeze(np.array(train_dataset.noise_or_not))  # True 表示是噪声样本
+
+    # 筛选出干净样本的索引
+    clean_indices = np.where(noise_or_not == False)[0]
+    # 每类的干净样本索引
+    class_indices = {cls: [] for cls in range(train_dataset.nb_classes)}
+    for idx in clean_indices:
+        class_indices[train_labels[idx]].append(idx)
+
+    # 每类抽取 val_ratio 比例的样本
+    val_indices = []
+    num_samples = max(1, int(len(train_labels) * val_ratio)) 
+    num_samples_per_class = max(1, int(num_samples / train_dataset.nb_classes))  # 至少抽取 1 个样本
+    for cls, indices in class_indices.items():
+        sampled_indices = np.random.choice(indices, size=num_samples_per_class, replace=False)
+        val_indices.extend(sampled_indices)
+
+    # 如果验证集大小不足 total_val_size，则从剩余样本中补充
+    if len(val_indices) < num_samples:
+        remaining_indices = np.setdiff1d(clean_indices, val_indices)
+        additional_indices = np.random.choice(remaining_indices, size=num_samples - len(val_indices), replace=False)
+        val_indices.extend(additional_indices)
+
+    # 构造验证集的 Subset
+    val_subset = Subset(train_dataset, val_indices)
+
+    # 构造训练集的 Subset（排除验证集样本）
+    all_indices = np.arange(len(train_dataset))
+    train_indices = np.setdiff1d(all_indices, val_indices)
+    train_subset = Subset(train_dataset, train_indices)
+
+    return  train_subset, val_subset
+
 
 
 def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None):
@@ -243,12 +293,15 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
     else:
         exit('unknown dataset: %s'%dataset)
 
+    if args.train_dvrl:
+        dvrl_train_dataset, dvrl_val_dataset = create_validation_set(dst_train)
+
     if args.zca:
         images = []
         labels = []
         print("Train ZCA")
         for i in tqdm.tqdm(range(len(dst_train))):
-            im, lab = dst_train[i]
+            im, lab, _ = dst_train[i]
             images.append(im)
             labels.append(lab)
         images = torch.stack(images, dim=0).to("cpu")
@@ -276,7 +329,8 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
 
     testloader = torch.utils.data.DataLoader(dst_test, batch_size=128, shuffle=False, num_workers=2)
 
-
+    if args.train_dvrl:
+        return channel, im_size, num_classes, class_names, mean, std, dst_train, dst_test, testloader, loader_train_dict, class_map, class_map_inv, dvrl_train_dataset, dvrl_val_dataset 
     return channel, im_size, num_classes, class_names, mean, std, dst_train, dst_test, testloader, loader_train_dict, class_map, class_map_inv
 
 
